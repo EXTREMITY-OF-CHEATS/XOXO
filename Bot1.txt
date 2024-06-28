@@ -1,0 +1,83 @@
+process.title = 'EXTREMITY OF CHEATS';
+
+const { Client } = require('discord.js-selfbot-v13');
+const client = new Client();
+
+// Define the servers to listen on
+const servers = {
+    Army: '713541415099170836',
+    MER: '718817029779357717',
+    Oasis: '829503250100518962',
+    Bamboo: '392631512673157120',
+    Celestial: '672574313433399336'
+};
+
+// Define the ID of the user to listen for
+const EPIC_USER_ID = '555955826880413696';
+
+// Initialize statistics tracking for only summon and arena
+const stats = {
+    arena: 0,
+    summon: 0,
+};
+
+let count = 0;
+
+// Function to update statistics
+const updateStats = (command) => {
+    if (stats[command] !== undefined) {
+        stats[command]++;
+    }
+
+    count++;
+    if (count == 10) {
+        console.log(`summon: ${stats['summon']} | arena: ${stats['arena']}`);
+        count = 0;
+    }
+};
+
+// Event listener for when the bot is ready
+client.on('ready', () => {
+    console.log(`${client.user.username} is ready!`);
+});
+
+// Function to handle messages and execute commands
+const handleCommands = async (message) => {
+    const component = message.components[0].components[0];
+    if (component.label == undefined) {
+        return;
+    }
+
+    const messageContent = component.label.toLowerCase();
+    const commands = [
+        { command: 'join', action: 'join', log: 'Joined an arena in', stat: 'arena' },
+        { command: 'summon', action: 'summon', log: 'Found the cheat code in', stat: 'summon' },
+    ];
+    
+    const foundCommands = commands.filter(({ command }) => messageContent.includes(command));
+    if (foundCommands.length == 0) {
+        return;
+    }
+    const { action, log, stat } = foundCommands[0];
+
+    try {
+        setTimeout(async () => {
+            // Handle Random Events
+            await message.clickButton(component.customId);
+            console.log(`${log} ${message.channel.name}`);
+            updateStats(stat);
+        }, 500);
+    } catch (error) {
+        console.error(`Error processing ${action}:`, error);
+    }
+};
+
+// Event listener for new messages
+client.on('messageCreate', async (message) => {
+    if (message.guild && Object.values(servers).includes(message.guild.id) && message.author.id === EPIC_USER_ID && message.components.length > 0) {
+        handleCommands(message);
+    }
+});
+
+// Log in to Discord
+client.login('YOUR_TOKEN_HERE');
